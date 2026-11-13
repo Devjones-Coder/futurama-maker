@@ -16,6 +16,8 @@ export class Runtime {
   private instanceListeners = new Map<string, () => void>();
   private timer: NodeJS.Timeout;
   private cleanupTimer: NodeJS.Timeout;
+  private statusTimer: NodeJS.Timeout;
+  private statusPollRunning = false;
   private readonly db: AppDatabase;
 
   constructor(private readonly options: RuntimeOptions) {
@@ -33,6 +35,8 @@ export class Runtime {
     this.refreshListeners();
     this.timer = setInterval(() => void this.pump(), 700);
     this.timer.unref();
+    this.statusTimer = setInterval(() => void this.refreshInstanceStatuses(), 10_000);
+    this.statusTimer.unref();
     void this.cleanupOldMedia();
     this.cleanupTimer = setInterval(() => void this.cleanupOldMedia(), 24 * 60 * 60 * 1000);
     this.cleanupTimer.unref();
@@ -43,6 +47,7 @@ export class Runtime {
     this.stopping = true;
     clearInterval(this.timer);
     clearInterval(this.cleanupTimer);
+    clearInterval(this.statusTimer);
     for (const stop of this.instanceListeners.values()) stop();
     this.instanceListeners.clear();
     while (this.working) await new Promise((resolve) => setTimeout(resolve, 200));
@@ -82,6 +87,20 @@ export class Runtime {
         this.db.prepare('UPDATE evolution_instances SET status=?,updated_at=? WHERE id=?').run(status, now(), instance.id);
       }));
       void client.getStatus().then((status) => this.db.prepare('UPDATE evolution_instances SET status=?,updated_at=? WHERE id=?').run(status, now(), instance.id));
+    }
+  }
+
+  private async refreshInstanceStatuses() {
+    if (this.stopping || this.statusPollRunning) return;
+    this.statusPollRunning = true;
+    try {
+      const instances = this.db.prepare('SELECT * FROM evolution_instances').all() as EvolutionInstance[];
+      await Promise.all(instances.map(async (instance) => {
+        const status = await new EvolutionClient(instance).getStatus();
+        if (!this.stopping) this.db.prepare('UPDATE evolution_instances SET status=?,updated_at=? WHERE id=?').run(status, now(), instance.id);
+      }));
+    } finally {
+      this.statusPollRunning = false;
     }
   }
 
