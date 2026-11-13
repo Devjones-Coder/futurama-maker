@@ -40,9 +40,31 @@ export class EvolutionClient {
   async disconnect() { return this.request<any>(`/instance/logout/${encodeURIComponent(this.instance.instance_name)}`, { method: 'DELETE' }); }
 
   async downloadIncomingMedia(event: Record<string, any>, destination: string, maxBytes = 500 * 1024 * 1024): Promise<string> {
-    const media = await this.request<any>(`/chat/getBase64FromMediaMessage/${encodeURIComponent(this.instance.instance_name)}`, {
-      method: 'POST', body: JSON.stringify({ message: event, convertToMp4: false }),
+    const endpoint = `/chat/getBase64FromMediaMessage/${encodeURIComponent(this.instance.instance_name)}`;
+    const fetchMedia = (message: Record<string, any>) => this.request<any>(endpoint, {
+      method: 'POST', body: JSON.stringify({ message, convertToMp4: false }),
     });
+    let media: any;
+    try {
+      media = await fetchMedia(event);
+    } catch (firstError) {
+      const key = event?.key;
+      if (!key?.id || !/^EVOLUTION_HTTP_(400|500|502|503|504)$/.test((firstError as Error)?.message ?? '')) throw firstError;
+      // Evolution can reject the event payload before its stored message is ready.
+      // Its media endpoint accepts the message key and resolves the full message itself.
+      try {
+        media = await fetchMedia({ key });
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 3_000));
+        const result = await this.request<any>(`/chat/findMessages/${encodeURIComponent(this.instance.instance_name)}`, {
+          method: 'POST', body: JSON.stringify({ where: { key: { id: key.id } } }),
+        });
+        const records = result?.messages?.records;
+        const stored = Array.isArray(records) ? records.find((record: any) => record?.key?.id === key.id && record?.key?.remoteJid === key.remoteJid) : undefined;
+        if (!stored?.message) throw firstError;
+        media = await fetchMedia({ key: stored.key, message: stored.message });
+      }
+    }
     const encoded = media?.base64 ?? media?.media?.base64;
     if (!encoded || typeof encoded !== 'string') throw new Error('MEDIA_BASE64_MISSING');
     const base64 = encoded.includes(',') ? encoded.slice(encoded.indexOf(',') + 1) : encoded;

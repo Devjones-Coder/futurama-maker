@@ -23,6 +23,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/server.ts",
-    "test:focused": "tsx test/backend.test.ts"
+    "test:focused": "tsx test/backend.test.ts && tsx test/evolution.test.ts"
   }
 }
