@@ -1,0 +1,30 @@
+{
+  "name": "@futurama/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "stage": "node stage.cjs",
+    "dist": "npm run stage && electron-rebuild --version 35.7.5 --module-dir staged --which-module better-sqlite3 && electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12",
+    "@electron/rebuild": "^3.7.2"
+  },
+  "build": {
+    "appId": "com.jones.futuramamaker",
+    "productName": "Futurama Maker",
+    "asar": true,
+    "directories": { "output": "../dist" },
+    "files": ["main.cjs", "preload.cjs", "control.html", "control.css", "control.js", "icon.png", "staged/**/*", "!**/*.map"],
+    "extraResources": [
+      { "from": "staged/resources/ffmpeg.exe", "to": "ffmpeg.exe" },
+      { "from": "staged/resources/ffprobe.exe", "to": "ffprobe.exe" },
+      { "from": "staged/resources/FFmpeg-LICENSE.txt", "to": "FFmpeg-LICENSE.txt" },
+      { "from": "staged/resources/FFmpeg-README.txt", "to": "FFmpeg-README.txt" }
+    ],
+    "win": { "target": [{ "target": "portable", "arch": ["x64"] }], "artifactName": "Futurama Maker.exe" },
+    "portable": { "artifactName": "Futurama Maker.exe" }
+  }
+}

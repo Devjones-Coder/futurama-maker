@@ -1,0 +1,11 @@
+{
+  "name": "@futurama/templates",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": { "sharp": "^0.34.4" },
+  "scripts": { "build": "tsc -p tsconfig.json", "test:focused": "tsx test/template.test.ts" },
+  "devDependencies": { "typescript": "^5.8.3", "tsx": "^4.19.3", "@types/node": "^22.15.30" }
+}

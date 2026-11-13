@@ -1,0 +1,17 @@
+{
+  "name": "futurama-maker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serviço local de renderização de vídeos para WhatsApp",
+  "workspaces": ["packages/*", "apps/*", "desktop"],
+  "scripts": {
+    "dev": "npm run dev --workspace @futurama/whatsapp",
+    "build": "npm run build --workspace @futurama/commands && npm run build --workspace @futurama/templates && npm run build --workspace @futurama/core && npm run build --workspace @futurama/whatsapp && npm run build --workspace @futurama/dashboard",
+    "test:focused": "npm run test:focused --workspaces --if-present",
+    "desktop:dist": "npm run build && npm run dist --workspace @futurama/desktop"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "tsx": "^4.19.3"
+  }
+}
