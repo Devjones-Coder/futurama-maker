@@ -1,0 +1,46 @@
+# 05 — Plano de execução direta, paralelismo e aceitação
+
+## Prioridade da entrega
+Caminho feliz completo antes de acabamento. Não iniciar Electron/YouTube hoje. Sem staging.
+
+## Frentes independentes para trabalho paralelo
+**A. Core/commands/templates:** parser de flags, geometria, modelo JSON, PNG do Tá Rolando e render FFmpeg testado com um vídeo local.
+
+**B. Evolution/SQLite/sessões:** migrations, webhook idempotente, autorização, download, envio, fila FIFO concurrency 1 e estados de conversa. Pode começar com renderizador falso e integrar o core depois.
+
+**C. Dashboard:** telas administrativas e detalhe de logs com dados simulados/local; integrar API após B. Quando chegar ZIP Stitch, adaptar CSS/HTML fielmente sem alterar escopo.
+
+Um integrador faz o encaixe e valida contrato. Trabalhadores/agentes não editam arquivos uns dos outros. Evitar contexto enorme: cada tarefa pequena, arquivos-alvo claros, commit e resumo curto.
+
+## Ordem de integração
+1. Criar contrato único de `RenderRequest` e config template.
+2. Fazer job local produzir MP4 1080×1350 com overlay correto.
+3. Plugar webhook/download/send real da Evolution.
+4. Validar fila com dois pedidos simultâneos.
+5. Adicionar dashboard e métricas; então aplicar aparência Stitch.
+6. Registrar no README comandos de setup e início realmente executados, com env vars em `.env.example`.
+
+## Testes focados (sem exageros)
+- Parser: `-top`, `-bottom30 -left5 -pb`, ausente, dois opostos, valores inválidos.
+- Geometria: vídeo horizontal/vertical com cover/contain, um eixo central, 100% na borda, zero espaço disponível.
+- Render: arquivo curto 9:16 e 16:9; verificar resolução e duração com FFprobe; `-pb` sem descolorir logo; manchete curta/longa.
+- Evolution: webhook duplicado não duplica job; não autorizado bloqueado; solicitação sem título pede resposta; dois pedidos em sequência FIFO, erro chega ao dashboard.
+- Testes de integração no ambiente local e uma demonstração real com instância autorizada, quando houver credenciais disponíveis.
+
+## Git e operação
+- Branches somente `main` e `dev`. Trabalhar em `dev`, commits/push automáticos por unidade funcional.
+- `main` recebe integração validada; não forçar merge se testes-chave falharem.
+- Ao falhar duas vezes no mesmo comando/sessão, diagnosticar e trocar estratégia, sem repetir cegamente.
+- Sem auditoria/reinstalação de infraestrutura pronta, sem CI extenso, sem documentação redundante.
+- Manter lista de bloqueios reais em texto curto, não criar tarefas especulativas.
+
+## Checklist final
+- [ ] Instância conectada por QR via dashboard.
+- [ ] Telefone autorizado e template padrão definido.
+- [ ] Vídeo com manchete e flags gera MP4 fiel.
+- [ ] `-pb` deixa a mídia em cinza e moldura colorida.
+- [ ] Fila global impede processamentos simultâneos.
+- [ ] Resultado volta ao WhatsApp; sessão fecha.
+- [ ] Falhas e consumo aparecem no detalhe do job.
+- [ ] ZIP Stitch aplicado quando fornecido.
+- [ ] Commits/push em `dev` e instrução clara de como promover para `main`.
