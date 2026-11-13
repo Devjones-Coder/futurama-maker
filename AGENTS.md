@@ -9,7 +9,7 @@ Leia `docs/01-mvp-whatsapp.md` e `docs/02-core-and-templates.md` antes de implem
 - Trabalhe em `dev`. Faça commits pequenos, com mensagens objetivas, e push automático ao concluir cada fatia funcional. Não crie branches adicionais. `main` é estável; só avance quando o fluxo principal estiver comprovado.
 - **Sem homologação**, Docker/Kubernetes, microserviços, CI elaborado, filas externas ou serviços pagos se não forem necessários.
 - **Sem IA**, inclusive sugestões de manchetes, análise de frames ou flag `-ia`.
-- Não redesenhe o dashboard por conta própria. O usuário enviará um ZIP exportado pelo Stitch contendo HTML/CSS; siga a linguagem visual desse protótipo e adapte somente o indispensável para os recursos especificados. Se o ZIP ainda não estiver disponível, construa uma UI funcional discreta, sem inventar controles; ajuste a estética depois.
+- **Design do dashboard: use exclusivamente a skill de design system disponível no ambiente do Codex como fonte de padrões visuais** (cores, tipografia, espaçamentos, componentes, estados e acessibilidade). Antes de implementar a UI, localize e leia essa skill e seus arquivos de referência, aplicando-a literalmente. Não use Stitch, ZIP de protótipo, referências externas de dashboards ou um design system inventado. A skill determina a aparência; `docs/04-dashboard-observability.md` determina as funcionalidades. Se a skill não estiver disponível, não invente identidade visual: mantenha apenas interface funcional e registre objetivamente a dependência visual. Toda a UI e mensagens devem estar em pt-BR.
 - Prefira Node.js + TypeScript, SQLite, Sharp e FFmpeg/FFprobe no sistema; escolha bibliotecas simples e mantenha dependências reduzidas.
 - Paralelize apenas tarefas de arquivos/módulos independentes (parser, renderer, banco, integração, UI). Defina contratos primeiro. Evite agentes mexendo nos mesmos arquivos e evite sessões de contexto gigantes.
 - Se um comando, tool ou sessão falhar repetidamente, pare de insistir no mesmo caminho: registre o erro, reduza o escopo e tente uma abordagem alternativa. Não gaste tempo refazendo configuração de infraestrutura que já funciona.
@@ -23,7 +23,7 @@ Leia `docs/01-mvp-whatsapp.md` e `docs/02-core-and-templates.md` antes de implem
 2. ingestão Evolution + download + entrega; 
 3. fila única + sessões + SQLite;
 4. dashboard de instâncias, telefones, templates, jobs e logs;
-5. refinamento visual segundo o ZIP do Stitch.
+5. aplicar somente o design system da skill ao dashboard, sem alterar escopo nem atrasar a entrega funcional.
 
 ## Entrega/relato
 Ao concluir cada etapa: arquivos alterados, teste executado, commit SHA, branch e bloqueio real (se houver). Sem relatórios longos, auditorias genéricas ou revisões de componentes não tocados.
