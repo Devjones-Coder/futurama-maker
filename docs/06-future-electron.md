@@ -1,4 +1,6 @@
-# 06 — Frente futura Electron (NÃO implementar no MVP)
+# 06 — Editor Electron futuro (NÃO implementar no MVP)
+
+**Distinção:** o MVP já terá um **host Electron mínimo** para tray/controle do serviço WhatsApp no Windows, documentado em `07-windows-tray.md`. Este documento trata apenas do **futuro editor** local de vídeos e recursos de YouTube.
 
 Objetivo: app desktop para preparar e gerar localmente o mesmo vídeo com o mesmo template e flags, sem depender do servidor; exportar MP4. UI inspirada no Canva apenas no visual e restrita aos controles definidos, sem recursos extras.
 
