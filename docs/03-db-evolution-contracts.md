@@ -27,7 +27,7 @@ Criar um único adapter `EvolutionClient` com:
 - `sendText(instance, phone, text)`
 - `sendVideo(instance, phone, path, caption?)`
 
-Endpoints e payloads exatos dependem da versão da Evolution instalada. Isolar essa diferença no adapter e testar com a instância real. Webhook recebe eventos autenticados conforme mecanismo disponível na instalação, verifica instância, tipo, messageId, origem e autorizados; descarta duplicatas. Nunca armazenar o media base64 no banco.
+Endpoints e payloads exatos dependem da versão da Evolution instalada. Isolar essa diferença no adapter e testar com a instância real. Em **Windows local**, priorizar recepção de eventos via conexão de saída WebSocket/Socket.IO se disponível na Evolution instalada (configuração e autenticação verificadas na API real). Em modo webhook, o endereço precisa ser realmente acessível pela Evolution; webhook remoto em `127.0.0.1` não funcionará. Ambos normalizam eventos para o mesmo handler, com deduplicação por messageId. Nunca armazenar o media base64 no banco.
 
 ## API interna do dashboard
 Rotas REST mínimas (podem mudar nomes, mas manter responsabilidades):
@@ -38,6 +38,7 @@ Rotas REST mínimas (podem mudar nomes, mas manter responsabilidades):
 - `GET /api/jobs`, `GET /api/jobs/:id`, `GET /api/jobs/:id/events`, `GET /api/metrics`.
 - `POST /webhooks/evolution/:instanceId` apenas para entrada Evolution.
 - `GET /health` para processo/API/SQLite/FFmpeg disponíveis.
+- Endpoint local autenticado para consultar status/porta/pausa/quantidade na fila e controlar pausa/retomada; a janela de tray comunica-se com o backend sem expor controles pela internet.
 
 Não criar painel público. Login inicial de operação: `admin` / `123456` por configuração de bootstrap, com senha salva por hash e opção de alterá-la. Não expor essa credencial como valor fixo num deployment aberto; não incluir API keys reais no Git.
 
