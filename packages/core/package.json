@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@futurama/commands": "*",
-    "@futurama/templates": "*"
+    "@futurama/commands": "workspace:*",
+    "@futurama/templates": "workspace:*"
   },
   "scripts": { "build": "tsc -p tsconfig.json", "test:focused": "tsx test/render.test.ts" },
   "devDependencies": { "typescript": "^5.8.3", "tsx": "^4.19.3", "@types/node": "^22.15.30" }

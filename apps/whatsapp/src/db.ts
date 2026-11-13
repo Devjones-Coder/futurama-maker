@@ -31,7 +31,7 @@ export function openDatabase(dataDir: string): Database.Database {
   db.prepare('INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, ?)').run(now());
   db.prepare('INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(2, ?)').run(now());
 
-  const template = db.prepare('SELECT id FROM templates WHERE slug=?').get('ta-rolando') as { id: string } | undefined;
+  const template = db.prepare('SELECT id, logo_path FROM templates WHERE slug=?').get('ta-rolando') as { id: string; logo_path: string | null } | undefined;
   if (!template) {
     const id = crypto.randomUUID();
     const config = {
@@ -39,8 +39,10 @@ export function openDatabase(dataDir: string): Database.Database {
       video: { x: 0, y: 370, width: 1080, height: 980 }, logoPath: 'assets/tarolando-logo.png',
       maxWords: 14, maxLines: 4, headlineFontSize: 48, minHeadlineFontSize: 18, minVideoHeight: 420, background: '#ffffff',
     };
-    db.prepare('INSERT INTO templates(id,name,slug,config_json,active,created_at,updated_at) VALUES(?,?,?,?,1,?,?)')
-      .run(id, 'Tá Rolando', 'ta-rolando', JSON.stringify(config), now(), now());
+    db.prepare('INSERT INTO templates(id,name,slug,config_json,logo_path,active,created_at,updated_at) VALUES(?,?,?,?,?,1,?,?)')
+      .run(id, 'Tá Rolando', 'ta-rolando', JSON.stringify(config), config.logoPath, now(), now());
+  } else if (!template.logo_path) {
+    db.prepare('UPDATE templates SET logo_path=?,updated_at=? WHERE id=?').run('assets/tarolando-logo.png', now(), template.id);
   }
   return db;
 }

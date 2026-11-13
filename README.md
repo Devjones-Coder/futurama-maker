@@ -27,16 +27,17 @@ O aplicativo recebe vídeos por uma instância Evolution API, renderiza o templa
 
 ## Desenvolvimento
 
-Requisitos para desenvolvimento: Node.js 20 ou superior, npm e FFmpeg/FFprobe acessíveis durante a execução local. O usuário final não precisa instalar Node ou FFmpeg: o host Electron inclui os binários Windows.
+Requisitos para desenvolvimento: Node.js 20 ou superior, Corepack/pnpm 9.15 ou superior e FFmpeg/FFprobe acessíveis durante a execução local. O usuário final não precisa instalar Node ou FFmpeg: o host Electron inclui os binários Windows.
 
 ```powershell
-npm install
-npm run build
-npm run dev --workspace @futurama/whatsapp
-npm run test:focused
+corepack enable
+pnpm install
+pnpm build
+pnpm --filter @futurama/whatsapp run dev
+pnpm test:focused
 ```
 
-O build de `npm run build` respeita a ordem dos workspaces do `package.json`: comandos/templates/core antes do backend e do dashboard. Os testes focados cobrem flags, geometria/renderização real, overlay e fluxo simulado Evolution/SQLite. Para empacotar no Windows x64: `npm run desktop:dist`.
+O build de `pnpm build` respeita a ordem dos workspaces declarada em `pnpm-workspace.yaml`: comandos/templates/core antes do backend e do dashboard. O pnpm mantém um store compartilhado de pacotes, reduzindo cópias entre workspaces. Os testes focados cobrem flags, geometria/renderização real, overlay e fluxo simulado Evolution/SQLite. Para empacotar no Windows x64: `pnpm desktop:dist`.
 
 O empacotamento procura `ffmpeg.exe` em `C:\ffmpeg\ffmpeg-8.0.1-essentials_build\bin`; use `FUTURAMA_FFMPEG_SOURCE` para indicar outro build Windows que tenha `ffprobe.exe`, `LICENSE` e `README.txt` no diretório esperado pelo script. A distribuição mantém os avisos GPLv3 e a identificação da origem dos binários junto ao executável.
 

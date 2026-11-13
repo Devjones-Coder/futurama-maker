@@ -27,9 +27,10 @@ const readme = path.resolve(path.dirname(ffmpeg), '..', 'README.txt');
 if (!fs.existsSync(lic) || !fs.existsSync(readme)) throw new Error('Os avisos de licença do pacote FFmpeg não foram encontrados junto aos binários.');
 fs.copyFileSync(lic, path.join(resources, 'FFmpeg-LICENSE.txt'));
 fs.copyFileSync(readme, path.join(resources, 'FFmpeg-README.txt'));
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const install = spawnSync(npm, ['install', '--omit=dev', '--prefix', staged], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
-if (install.status !== 0) throw new Error(`A instalação das dependências de execução falhou (status ${install.status}).`);
+const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const install = spawnSync(pnpm, ['install', '--prod', '--dir', staged, '--ignore-workspace', '--config.node-linker=hoisted'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' });
+if (install.status !== 0) throw new Error(`A instalação pnpm das dependências de execução falhou (status ${install.status}).`);
+for (const file of ['pnpm-lock.yaml']) fs.rmSync(path.join(staged, file), { force: true });
 for (const name of fs.readdirSync(path.join(root, 'packages'))) {
   const source = path.join(root, 'packages', name);
   const target = path.join(staged, 'node_modules', '@futurama', name);

@@ -13,7 +13,7 @@ function saveState() { try { fs.mkdirSync(path.dirname(statePath()), { recursive
 function setState(next) { Object.assign(state, next); if (win && !win.isDestroyed()) win.webContents.send('status', state); if (tray) tray.setToolTip(`Futurama Maker — ${state.status}`); }
 function showControl() { if (!win || win.isDestroyed()) createWindow(); else { win.show(); win.focus(); } }
 function createWindow() {
-  win = new BrowserWindow({ width: 420, height: 330, resizable: false, show: false, title: 'Futurama Maker — Serviço', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  win = new BrowserWindow({ width: 420, height: 450, resizable: false, show: false, title: 'Futurama Maker — Serviço', webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   win.loadFile(path.join(__dirname, 'control.html')); win.once('ready-to-show', () => win.show());
   win.on('minimize', e => { e.preventDefault(); win.hide(); });
   win.on('close', e => { if (!quitting) { e.preventDefault(); win.hide(); } });
@@ -25,7 +25,7 @@ function api(pathname, method = 'GET') {
   });
 }
 async function refresh() {
-  try { const s = await api('/api/status'); port = Number(s.port || port); const label = s.status === 'running' ? (s.paused ? 'Pausado' : 'Em execução') : s.status; setState({ ...s, status: label }); }
+  try { const s = await api('/api/status'); port = Number(s.port || port); const label = s.status === 'running' ? (s.paused ? 'Pausado' : 'Em execução') : s.status; setState({ ...s, status: label, error: undefined }); }
   catch { if (state.status !== 'Iniciando') setState({ status: 'Erro', error: 'BACKEND_INDISPONIVEL' }); }
 }
 async function togglePause() { const pause = !state.paused; await api(pause ? '/api/service/pause' : '/api/service/resume', 'POST'); state.paused = pause; saveState(); await refresh(); buildMenu(); return state; }
@@ -59,8 +59,10 @@ async function startBackend() {
 }
 app.on('second-instance', showControl);
 app.whenReady().then(() => {
+  app.setName('Futurama Maker');
+  app.setPath('userData', path.join(app.getPath('appData'), 'Futurama Maker'));
   if (!app.requestSingleInstanceLock()) { app.quit(); return; }
-  app.setName('Futurama Maker'); createWindow();
+  createWindow();
   tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png'))); tray.setToolTip('Futurama Maker — Iniciando'); tray.on('double-click', showControl); buildMenu();
   ipcMain.handle('status', () => state); ipcMain.handle('open-dashboard', () => shell.openExternal(state.dashboardUrl || `http://127.0.0.1:${port}`));
   ipcMain.handle('toggle-pause', () => togglePause()); ipcMain.handle('quit', shutdown); startBackend();

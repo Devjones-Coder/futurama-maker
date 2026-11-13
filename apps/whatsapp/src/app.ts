@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,7 @@ const sanitizeInstance = (row: any) => ({ ...row, api_key: row.api_key ? '••
 const maskPhone = (number: string) => number.length < 7 ? number : `${number.slice(0, 4)}••••${number.slice(-3)}`;
 const safePhone = (value: string) => value.replace(/\D/g, '');
 
-export function createApp(options: AppOptions) {
+export function createApp(options: AppOptions): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '3mb' }));

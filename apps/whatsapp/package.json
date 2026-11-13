@@ -6,9 +6,9 @@
   "types": "dist/server.d.ts",
   "type": "commonjs",
   "dependencies": {
-    "@futurama/commands": "*",
-    "@futurama/core": "*",
-    "@futurama/templates": "*",
+    "@futurama/commands": "workspace:*",
+    "@futurama/core": "workspace:*",
+    "@futurama/templates": "workspace:*",
     "better-sqlite3": "^12.2.0",
     "express": "^4.21.2",
     "socket.io-client": "^4.8.1"

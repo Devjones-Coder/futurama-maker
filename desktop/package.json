@@ -5,7 +5,7 @@
   "main": "main.cjs",
   "scripts": {
     "stage": "node stage.cjs",
-    "dist": "npm run stage && electron-rebuild --version 35.7.5 --module-dir staged --which-module better-sqlite3 && electron-builder --win portable --x64"
+    "dist": "pnpm run stage && electron-rebuild --version 35.7.5 --module-dir staged --which-module better-sqlite3 && electron-builder --win portable --x64"
   },
   "devDependencies": {
     "electron": "^35.0.0",
@@ -24,7 +24,7 @@
       { "from": "staged/resources/FFmpeg-LICENSE.txt", "to": "FFmpeg-LICENSE.txt" },
       { "from": "staged/resources/FFmpeg-README.txt", "to": "FFmpeg-README.txt" }
     ],
-    "win": { "target": [{ "target": "portable", "arch": ["x64"] }], "artifactName": "Futurama Maker.exe" },
+    "win": { "icon": "icon-512.png", "target": [{ "target": "portable", "arch": ["x64"] }], "artifactName": "Futurama Maker.exe" },
     "portable": { "artifactName": "Futurama Maker.exe" }
   }
 }
