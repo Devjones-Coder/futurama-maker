@@ -1,7 +1,9 @@
 # 04 — Dashboard e diagnóstico operacional
 
-## Referência visual obrigatória
-O usuário fornecerá **ZIP do protótipo Stitch (HTML/CSS/assets)**. O dashboard final deve seguir fielmente esse modelo visual. Não inferir recursos a partir de elementos decorativos do protótipo. Sem ZIP ainda: implementar UI mínima funcional e deixar CSS facilmente substituível.
+## Design system: única referência visual
+O **único guia de design** é a skill de design system disponibilizada no ambiente do Codex. Antes de criar componentes ou estilos, localizar, ler e seguir integralmente suas instruções e referências pertinentes: tokens, cores, tipografia, espaçamentos, componentes, estados, contraste e padrões de navegação. **Não usar Stitch, ZIP, templates visuais externos, estilos arbitrários ou inferência criativa de recursos.** Esta spec define somente telas e comportamentos; a skill define a apresentação.
+
+Todas as telas, rótulos, mensagens, estados e erros devem estar em **português brasileiro (pt-BR)**. Não acrescentar controles, páginas, gráficos ou ações que não estejam especificados aqui apenas porque a skill oferece componentes prontos. Se a skill estiver indisponível, priorizar uma UI funcional básica, registrar a ausência e aguardar a referência visual; não inventar um design system.
 
 ## Telas estritamente necessárias
 1. **Visão geral:** conectividade das instâncias, jobs em fila/processamento/concluídos/com erro, disco ocupado por mídias, uso atual aproximado de CPU/RAM do processo e último erro.
