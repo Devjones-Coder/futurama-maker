@@ -20,7 +20,7 @@ export class EvolutionClient {
       signal: AbortSignal.timeout(30_000),
     });
     const body = await response.text();
-    if (!response.ok) throw new Error(`EVOLUTION_HTTP_${response.status}: ${body.slice(0, 240)}`);
+    if (!response.ok) throw new Error(`EVOLUTION_HTTP_${response.status}`);
     return (body ? JSON.parse(body) : {}) as T;
   }
 
@@ -69,6 +69,7 @@ export class EvolutionClient {
   listen(onEvent: (event: any) => void, onStatus: (status: string) => void): () => void {
     const base = cleanBase(this.instance.base_url);
     let socket: Socket;
+    let namespaceRetry: NodeJS.Timeout | undefined;
     try {
       socket = io(`${base}/${encodeURIComponent(this.instance.instance_name)}`, {
         transports: ['websocket'], reconnection: true, reconnectionDelay: 1_000, reconnectionDelayMax: 30_000,
@@ -78,9 +79,19 @@ export class EvolutionClient {
       onStatus(`erro: ${error instanceof Error ? error.message : 'falha ao criar socket'}`);
       return () => {};
     }
-    socket.on('connect', () => onStatus('transporte conectado'));
-    socket.on('disconnect', (reason) => onStatus(`transporte desconectado: ${reason}`));
-    socket.on('connect_error', (error) => onStatus(`transporte indisponível: ${error.message}`));
+    socket.on('connect', () => {
+      if (namespaceRetry) clearTimeout(namespaceRetry);
+      namespaceRetry = undefined;
+    });
+    socket.on('connect_error', (error) => {
+      // Socket.IO does not automatically retry a rejected namespace. Evolution creates it
+      // when the first configured event is emitted, which may happen after this listener starts.
+      if (error.message === 'Invalid namespace' && !namespaceRetry) {
+        namespaceRetry = setTimeout(() => { namespaceRetry = undefined; socket.connect(); }, 10_000);
+        namespaceRetry.unref();
+      }
+      console.info(`[evolution] websocket ${this.instance.instance_name}: ${error.message === 'Invalid namespace' ? 'namespace indisponível' : 'conexão indisponível'}`);
+    });
     const connectionChanged = (payload: any) => {
       const state = payload?.data?.state ?? payload?.data?.instance?.state ?? payload?.state ?? payload?.data?.status;
       if (state) onStatus(normalizeConnectionState(String(state)));
@@ -88,7 +99,7 @@ export class EvolutionClient {
     for (const name of ['connection.update', 'CONNECTION_UPDATE', 'connection-update']) socket.on(name, connectionChanged);
     // Evolution API v2 emits configured events on the per-instance namespace; event payloads carry {event, instance, data}.
     for (const name of ['messages.upsert', 'MESSAGES_UPSERT', 'messages-upsert']) socket.on(name, onEvent);
-    return () => socket.disconnect();
+    return () => { if (namespaceRetry) clearTimeout(namespaceRetry); socket.disconnect(); };
   }
 }
 
