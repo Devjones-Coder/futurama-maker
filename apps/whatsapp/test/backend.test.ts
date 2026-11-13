@@ -28,6 +28,15 @@ async function main() {
     db.prepare('INSERT INTO authorized_numbers(id,phone_e164,display_name,active,created_at,updated_at) VALUES(?,?,?,1,?,?)').run(phoneIds[i], phone, `Pessoa ${i}`, stamp, stamp);
     db.prepare('INSERT INTO authorized_number_instances(number_id,instance_id) VALUES(?,?)').run(phoneIds[i], instanceId);
   }
+  const expiredPath = path.join(temp, 'input', 'expired.source');
+  const orphanPath = path.join(temp, 'input', 'orphan.source');
+  await fs.mkdir(path.dirname(expiredPath), { recursive: true });
+  await fs.writeFile(expiredPath, 'expired-media');
+  await fs.writeFile(orphanPath, 'orphan-media');
+  const oldTime = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  await fs.utimes(orphanPath, oldTime, oldTime);
+  db.prepare('INSERT INTO sessions(id,instance_id,phone_e164,state,payload_json,expires_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)')
+    .run(crypto.randomUUID(), instanceId, '5511888888888', 'waiting_title', JSON.stringify({ mediaPath: expiredPath }), oldTime.toISOString(), stamp, stamp);
   db.close();
 
   let inFlight = 0, maximum = 0;
@@ -90,8 +99,15 @@ async function main() {
     await service.close(); service = undefined;
     const reopened = openDatabase(temp);
     assert.equal((reopened.prepare('SELECT COUNT(*) AS n FROM jobs').get() as any).n, 4, 'jobs persist after closing and reopening SQLite');
+    const finished = reopened.prepare("SELECT input_path,output_path FROM jobs WHERE status IN ('delivered','failed')").all() as Array<{ input_path: string; output_path: string }>;
+    for (const job of finished) {
+      await assert.rejects(fs.access(job.input_path), { code: 'ENOENT' }, 'source media is removed after completion');
+      await assert.rejects(fs.access(job.output_path), { code: 'ENOENT' }, 'rendered media is removed after completion');
+    }
+    await assert.rejects(fs.access(expiredPath), { code: 'ENOENT' }, 'expired session media is removed');
+    await assert.rejects(fs.access(orphanPath), { code: 'ENOENT' }, 'orphan media is removed');
     reopened.close();
-    console.log('Backend mock integration passed: pause/resume, webhook deduplication, download diagnostics, FIFO concurrency=1 and SQLite persistence.');
+    console.log('Backend mock integration passed: pause/resume, webhook deduplication, download diagnostics, FIFO concurrency=1, media cleanup and SQLite persistence.');
   } finally {
     if (service) await service.close();
     await new Promise<void>((resolve) => evolutionServer.close(() => resolve()));

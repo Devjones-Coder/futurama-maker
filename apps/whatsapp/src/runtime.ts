@@ -31,14 +31,14 @@ export class Runtime {
       if (job.session_id) this.db.prepare("UPDATE sessions SET state='failed',updated_at=? WHERE id=?").run(now(), job.session_id);
       addEvent(this.db, job.id, job.status, 'error', 'Processamento interrompido antes de concluir; não foi reenviado automaticamente.', { code: 'INTERRUPTED_RESTART' });
     }
-    this.db.prepare("UPDATE sessions SET state='expired', updated_at=? WHERE expires_at < ? AND state NOT IN ('delivered','failed','cancelled','expired')").run(now(), now());
+    this.db.prepare("UPDATE sessions SET state='expired', updated_at=? WHERE expires_at < ? AND state IN ('waiting_title','waiting_title_choice')").run(now(), now());
     this.refreshListeners();
     this.timer = setInterval(() => void this.pump(), 700);
     this.timer.unref();
     this.statusTimer = setInterval(() => void this.refreshInstanceStatuses(), 10_000);
     this.statusTimer.unref();
     void this.cleanupOldMedia();
-    this.cleanupTimer = setInterval(() => void this.cleanupOldMedia(), 24 * 60 * 60 * 1000);
+    this.cleanupTimer = setInterval(() => void this.cleanupOldMedia(), 60_000);
     this.cleanupTimer.unref();
     void this.pump();
   }
@@ -62,15 +62,54 @@ export class Runtime {
   }
   queueCount() { return (this.db.prepare("SELECT COUNT(*) AS n FROM jobs WHERE status='queued'").get() as { n: number }).n; }
 
+  private async removeMedia(file: string | undefined, folder: 'input' | 'output') {
+    if (!file) return;
+    const root = path.resolve(this.options.dataDir, folder);
+    const target = path.resolve(file);
+    const relative = path.relative(root, target);
+    if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return;
+    await fs.rm(target, { force: true }).catch(() => {});
+  }
+
   private async cleanupOldMedia() {
-    const retentionDays = Number(getSetting(this.db, 'settings', { retentionDays: 7 }).retentionDays ?? 7);
-    const cutoff = new Date(Date.now() - Math.max(1, retentionDays) * 24 * 60 * 60 * 1000).toISOString();
-    const oldJobs = this.db.prepare("SELECT id,input_path,output_path FROM jobs WHERE status IN ('delivered','failed','cancelled','expired') AND finished_at IS NOT NULL AND finished_at<?").all(cutoff) as Array<{ id: string; input_path: string; output_path: string }>;
-    for (const job of oldJobs) {
-      await fs.rm(job.input_path, { force: true }).catch(() => {});
-      await fs.rm(job.output_path, { force: true }).catch(() => {});
+    const stamp = now();
+    this.db.prepare("UPDATE sessions SET state='expired',updated_at=? WHERE expires_at<? AND state IN ('waiting_title','waiting_title_choice')").run(stamp, stamp);
+    const jobs = this.db.prepare("SELECT input_path,output_path FROM jobs WHERE status IN ('delivered','failed','cancelled','expired')").all() as Array<{ input_path: string; output_path: string }>;
+    for (const job of jobs) {
+      await this.removeMedia(job.input_path, 'input');
+      await this.removeMedia(job.output_path, 'output');
     }
-    if (oldJobs.length) console.info(`[retenção] mídias antigas removidas: ${oldJobs.length} job(s)`);
+    const sessions = this.db.prepare("SELECT id,payload_json FROM sessions WHERE state IN ('delivered','failed','cancelled','expired') AND payload_json!='{}'").all() as Array<{ id: string; payload_json: string }>;
+    for (const session of sessions) {
+      let mediaPath: string | undefined;
+      try { mediaPath = JSON.parse(session.payload_json)?.mediaPath; } catch {}
+      await this.removeMedia(mediaPath, 'input');
+      this.db.prepare("UPDATE sessions SET payload_json='{}' WHERE id=?").run(session.id);
+    }
+    await this.cleanupOrphanMedia();
+  }
+
+  private async cleanupOrphanMedia() {
+    const referenced = new Set<string>();
+    const jobs = this.db.prepare("SELECT input_path,output_path FROM jobs WHERE status IN ('queued','downloading','rendering','sending')").all() as Array<{ input_path: string; output_path: string }>;
+    for (const job of jobs) { referenced.add(path.resolve(job.input_path)); referenced.add(path.resolve(job.output_path)); }
+    const sessions = this.db.prepare("SELECT payload_json FROM sessions WHERE state IN ('waiting_title','waiting_title_choice')").all() as Array<{ payload_json: string }>;
+    for (const session of sessions) {
+      try { const file = JSON.parse(session.payload_json)?.mediaPath; if (file) referenced.add(path.resolve(file)); } catch {}
+    }
+    const cutoff = Date.now() - 60 * 60 * 1000;
+    const walk = async (folder: 'input' | 'output', dir: string): Promise<void> => {
+      for (const item of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+        const file = path.join(dir, item.name);
+        if (item.isDirectory()) await walk(folder, file);
+        else if (item.isFile() && !referenced.has(path.resolve(file))) {
+          const stat = await fs.stat(file).catch(() => null);
+          if (stat && stat.mtimeMs < cutoff) await this.removeMedia(file, folder);
+        }
+      }
+    };
+    await walk('input', path.join(this.options.dataDir, 'input'));
+    await walk('output', path.join(this.options.dataDir, 'output'));
   }
 
   refreshListeners() {
@@ -256,6 +295,8 @@ export class Runtime {
       const instance = this.db.prepare('SELECT * FROM evolution_instances WHERE id=?').get(job.instance_id) as EvolutionInstance;
       await new EvolutionClient(instance).sendText(job.phone_e164, `Não consegui concluir na etapa ${stage}. Código: ${code}. Atendimento: ${supportCode}.`).catch(() => {});
     } finally {
+      await this.removeMedia(job.input_path, 'input');
+      await this.removeMedia(job.output_path, 'output');
       this.working = false;
       void this.pump();
     }

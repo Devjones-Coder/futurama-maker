@@ -18,7 +18,7 @@ export function createApp(options: AppOptions): Express {
   app.use(express.json({ limit: '3mb' }));
   const sessions = new Map<string, { expires: number }>();
   const settings = getSetting(options.db, 'settings', {
-    maxVideoBytes: 500 * 1024 * 1024, maxVideoSeconds: 300, retentionDays: 7,
+    maxVideoBytes: 500 * 1024 * 1024, maxVideoSeconds: 300,
     ffmpegPreset: 'veryfast', ffmpegCrf: 21, maxLogDays: 30,
   });
   const adminHash = () => getSetting(options.db, 'admin', { username: process.env.FUTURAMA_ADMIN_USER ?? 'admin', salt: '', hash: '' });
@@ -194,7 +194,7 @@ export function createApp(options: AppOptions): Express {
   app.get('/api/settings', (_req, res) => res.json({ ...getSetting(options.db, 'settings', settings), adminUsername: adminHash().username, adminPasswordSet: Boolean(adminHash().hash) }));
   app.put('/api/settings', (req, res) => {
     const body = req.body ?? {};
-    const next = { ...getSetting(options.db, 'settings', settings), ...Object.fromEntries(['maxVideoBytes','maxVideoSeconds','retentionDays','ffmpegPreset','ffmpegCrf','maxLogDays'].filter((key) => body[key] !== undefined).map((key) => [key, body[key]])) };
+    const next = { ...getSetting(options.db, 'settings', settings), ...Object.fromEntries(['maxVideoBytes','maxVideoSeconds','ffmpegPreset','ffmpegCrf','maxLogDays'].filter((key) => body[key] !== undefined).map((key) => [key, body[key]])) };
     setSetting(options.db, 'settings', next);
     if (body.adminUsername || body.adminPassword) {
       const current = adminHash();
