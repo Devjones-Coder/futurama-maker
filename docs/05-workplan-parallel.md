@@ -8,7 +8,7 @@ Caminho feliz completo antes de acabamento. Não iniciar Electron/YouTube hoje. 
 
 **B. Evolution/SQLite/sessões:** migrations, webhook idempotente, autorização, download, envio, fila FIFO concurrency 1 e estados de conversa. Pode começar com renderizador falso e integrar o core depois.
 
-**C. Dashboard:** telas administrativas e detalhe de logs com dados simulados/local; integrar API após B. Quando chegar ZIP Stitch, adaptar CSS/HTML fielmente sem alterar escopo.
+**C. Dashboard:** telas administrativas e detalhe de logs com dados simulados/local; integrar API após B. Para aparência, localizar e ler a skill de design system e segui-la como **única referência visual**, sem ampliar as funcionalidades. Nunca aguardar ZIP do Stitch.
 
 Um integrador faz o encaixe e valida contrato. Trabalhadores/agentes não editam arquivos uns dos outros. Evitar contexto enorme: cada tarefa pequena, arquivos-alvo claros, commit e resumo curto.
 
@@ -17,7 +17,7 @@ Um integrador faz o encaixe e valida contrato. Trabalhadores/agentes não editam
 2. Fazer job local produzir MP4 1080×1350 com overlay correto.
 3. Plugar webhook/download/send real da Evolution.
 4. Validar fila com dois pedidos simultâneos.
-5. Adicionar dashboard e métricas; então aplicar aparência Stitch.
+5. Adicionar dashboard e métricas; aplicar somente o design system da skill, preservando escopo e textos em pt-BR.
 6. Registrar no README comandos de setup e início realmente executados, com env vars em `.env.example`.
 
 ## Testes focados (sem exageros)
@@ -42,5 +42,5 @@ Um integrador faz o encaixe e valida contrato. Trabalhadores/agentes não editam
 - [ ] Fila global impede processamentos simultâneos.
 - [ ] Resultado volta ao WhatsApp; sessão fecha.
 - [ ] Falhas e consumo aparecem no detalhe do job.
-- [ ] ZIP Stitch aplicado quando fornecido.
+- [ ] Dashboard em pt-BR segue apenas o design system da skill, sem recursos inventados.
 - [ ] Commits/push em `dev` e instrução clara de como promover para `main`.
