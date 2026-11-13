@@ -14,7 +14,7 @@ As duas frentes compartilharão o motor de renderização, esquema de templates 
 - `dev`: trabalho em andamento, commits e pushs frequentes.
 - Sem ambiente de homologação.
 - Priorizar o caminho completo vídeo + legenda → MP4 entregue no WhatsApp.
-- O protótipo visual do Stitch será fornecido separadamente em ZIP com HTML; adotá-lo como referência de layout do dashboard, sem acrescentar recursos.
+- O dashboard seguirá **exclusivamente o design system definido pela skill disponível no ambiente do Codex**; Stitch e ZIP de protótipo deixam de ser referências. Os requisitos funcionais estão em `docs/04-dashboard-observability.md`. Interface inteiramente em pt-BR.
 - As especificações detalhadas estão em `docs/` na branch `dev`.
 - Instruções para Codex: `AGENTS.md` na branch `dev`.
 
