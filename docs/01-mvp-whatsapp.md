@@ -1,10 +1,10 @@
 # 01 — Escopo e fluxo do MVP WhatsApp
 
 ## Objetivo
-Serviço interno para 4–5 pessoas: receber **vídeo e manchete** pelo WhatsApp via Evolution API, gerar vídeo de notícia no formato feed Instagram 4:5 usando template cadastrado, responder com o MP4 final. O servidor faz a renderização. Uma renderização por vez.
+Serviço interno para 4–5 pessoas: receber **vídeo e manchete** pelo WhatsApp via Evolution API, gerar vídeo de notícia no formato feed Instagram 4:5 usando template cadastrado, responder com o MP4 final. **O motor roda localmente no computador Windows que executa o EXE**, sem exigir servidor separado; o processo fica na tray. Uma renderização por vez. O mesmo núcleo poderá rodar em um servidor no futuro.
 
 ## MVP obrigatório
-- Evolution: configuração da URL e API key pelo dashboard; múltiplas instâncias com status, QR Code, conexão e desconexão pelas ações compatíveis com a versão instalada da Evolution. Configurar webhook de recebimento/estado. Não presumir endpoints sem verificar a API real.
+- Evolution: configuração da URL e API key pelo dashboard; múltiplas instâncias com status, QR Code, conexão e desconexão pelas ações compatíveis com a versão instalada da Evolution. Para o backend **local** preferir WebSocket de saída/Socket.IO de eventos quando disponível; manter webhook apenas para endpoint alcançável. Não presumir endpoints nem que Evolution remota alcança `localhost`. Ver `docs/07-windows-tray.md`.
 - Telefones autorizados, vinculados a uma ou mais instâncias; cada instância tem um **template padrão** previamente cadastrado. Resolver template por instância de destino; não inventar flag de escolha de template neste MVP.
 - Templates persistidos em SQLite (configuração JSON) e recursos visuais em disco. Seed inicial: **Tá Rolando**.
 - Receber mensagem de vídeo com legenda contendo título e flags, ou vídeo e título em mensagens consecutivas na mesma conversa. Não baixar mídia de remetente não autorizado. Ignorar mensagens de grupo/status e eventos sem mídia/título relevantes.
@@ -13,6 +13,7 @@ Serviço interno para 4–5 pessoas: receber **vídeo e manchete** pelo WhatsApp
 - Serialização global de render: **concorrência = 1**. Usuários adicionais recebem posição na fila quando o pedido estiver pronto para renderizar.
 - Sessão conversacional por `instanceId + phone`; encerra após envio bem-sucedido, cancelamento, falha terminal ou expiração.
 - Dashboard: login simples, administração de templates, telefones, instâncias, fila/jobs, logs detalhados e consumo de recursos; especificado em `docs/04-dashboard-observability.md`.
+- EXE Windows x64 portátil com tray: mostrar status/porta real, abrir dashboard no navegador, pausar/retomar serviço, sair com segurança, manter backend vivo ao minimizar/fechar janela. Ver `docs/07-windows-tray.md`.
 
 ## Estados de uma solicitação
 `receiving → waiting_title (se necessário) → waiting_title_choice (se necessário) → queued → downloading → rendering → sending → delivered`. Saídas: `failed`, `cancelled`, `expired`.
@@ -30,7 +31,7 @@ O pedido só ocupa a vaga de render quando o texto estiver definido. Enquanto ag
 - Falha: indicar etapa (“download”, “renderização”, “envio”) e um código curto de atendimento vinculado ao job, sem expor stack trace ao usuário.
 
 ## Não fazer agora
-IA, `-ia`, YouTube/yt-dlp, corte temporal com alças, Electron, editor visual, analytics externos, armazenamento em nuvem obrigatório, múltiplos workers, assinaturas, cobrança, ambiente de homologação, funcionalidades inventadas pelo Stitch.
+IA, `-ia`, YouTube/yt-dlp, corte temporal com alças, **editor completo Electron** (o host mínimo de tray é obrigatório), editor visual, analytics externos, armazenamento em nuvem obrigatório, múltiplos workers, assinaturas, cobrança, ambiente de homologação, funcionalidades inventadas pelo Stitch.
 
 ## Critério de pronto
 Dois números autorizados em instância configurada conseguem enviar vídeos com título; um processa e outro entra na fila; output 1080×1350 com logo/manchete corretas e áudio preservado; flags e `-pb` respeitadas; vídeo entregue; dashboard mostra job, tempos, tamanhos e etapa eventual de erro.
