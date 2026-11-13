@@ -10,7 +10,12 @@ function coreRenderer(dataDir: string): RenderProcessor {
   return async (input: RenderJobInput) => {
     let core: any;
     try { core = require('@futurama/core'); }
-    catch { throw new Error('CORE_PACKAGE_MISSING'); }
+    catch (error) {
+      const detail = error instanceof Error ? error.message : '';
+      if (detail.includes('sharp')) throw new Error('CORE_NATIVE_DEPENDENCY_UNAVAILABLE');
+      if ((error as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND') throw new Error('CORE_PACKAGE_MISSING');
+      throw new Error('CORE_LOAD_FAILED');
+    }
     const result = await core.renderVideo({
       inputPath: input.inputPath, outputPath: input.outputPath, headline: input.title,
       template: input.template.config, alignment: input.alignment, grayscale: input.grayscale,

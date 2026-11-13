@@ -5,7 +5,7 @@
   "main": "main.cjs",
   "scripts": {
     "stage": "node stage.cjs",
-    "dist": "pnpm run stage && electron-rebuild --version 35.7.5 --module-dir staged --which-module better-sqlite3 && electron-builder --win portable --x64"
+    "dist": "pnpm run stage && electron-rebuild --version 35.7.5 --module-dir staged --which-module better-sqlite3 && electron-builder --win portable --x64 && node verify-package.cjs"
   },
   "devDependencies": {
     "electron": "^35.0.0",
@@ -16,6 +16,7 @@
     "appId": "com.jones.futuramamaker",
     "productName": "Futurama Maker",
     "asar": true,
+    "asarUnpack": ["staged/node_modules/@img/**/*", "staged/node_modules/sharp/**/*", "staged/node_modules/better-sqlite3/**/*"],
     "directories": { "output": "../dist" },
     "files": ["main.cjs", "preload.cjs", "control.html", "control.css", "control.js", "icon.png", "staged/**/*", "!**/*.map"],
     "extraResources": [
